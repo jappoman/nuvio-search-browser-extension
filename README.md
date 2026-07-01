@@ -36,9 +36,22 @@ npm run package
 
 ### Load in Firefox
 
-1. Open `about:debugging#/runtime/this-firefox`
-2. Choose `Load Temporary Add-on`
-3. Select `manifest.json`
+Do not install the local zip from `about:addons` on stable Firefox: it will fail with "has not been verified" because the package is unsigned.
+
+Use one of these development flows instead:
+
+1. Temporary load from source:
+   Open `about:debugging#/runtime/this-firefox`
+   Choose `Load Temporary Add-on`
+   Select `manifest.json`
+2. Run from the terminal:
+
+```bash
+npm install
+npm run firefox:dev
+```
+
+For a normal install on stable Firefox, the extension must be signed by Mozilla first.
 
 ### Load in Chrome
 

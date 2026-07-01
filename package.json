@@ -6,10 +6,12 @@
   "scripts": {
     "test": "vitest run --globals",
     "check": "npm test && node --check browser-api.js && node --check core.js && node --check content.js && node --check options.js && node --check launch.js",
-    "package": "rm -rf dist && mkdir -p dist && zip -r dist/open-in-nuvio.zip manifest.json browser-api.js core.js content.js options.html options.css options.js launch.html launch.css launch.js icons"
+    "package": "rm -rf dist && mkdir -p dist && zip -r dist/open-in-nuvio.zip manifest.json browser-api.js core.js content.js options.html options.css options.js launch.html launch.css launch.js icons",
+    "firefox:dev": "web-ext run -s . -t firefox-desktop"
   },
   "devDependencies": {
     "jsdom": "^26.1.0",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "web-ext": "^8.8.0"
   }
 }
