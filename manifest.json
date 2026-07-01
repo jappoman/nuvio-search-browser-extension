@@ -22,16 +22,21 @@
         "*://www.google.com/search*",
         "*://duckduckgo.com/*",
         "*://www.imdb.com/title/*",
+        "*://www.imdb.com/*/title/*",
         "*://trakt.tv/movies/*",
         "*://trakt.tv/shows/*",
+        "*://app.trakt.tv/movies/*",
+        "*://app.trakt.tv/shows/*",
         "*://letterboxd.com/film/*",
         "*://www.justwatch.com/*/movie/*",
+        "*://www.justwatch.com/*/film/*",
         "*://www.justwatch.com/*/tv-show/*",
         "*://*.wikipedia.org/wiki/*"
       ],
       "js": [
         "browser-api.js",
         "core.js",
+        "site-modules.js",
         "content.js"
       ],
       "run_at": "document_idle"

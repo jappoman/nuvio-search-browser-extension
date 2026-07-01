@@ -24,6 +24,6 @@
   });
 
   document.getElementById("openSite").addEventListener("click", () => {
-    window.open("https://nuvio.tv/", "_blank", "noopener");
+    window.open("https://web.nuvioapp.space/", "_blank", "noopener");
   });
 })();

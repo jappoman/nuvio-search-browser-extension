@@ -8,6 +8,19 @@
     return Object.keys(core.DEFAULT_SETTINGS);
   }
 
+  function siteSettingKeys() {
+    return settingKeys().filter((key) => key !== "fallbackToAssistant");
+  }
+
+  function setChecked(keys, value) {
+    keys.forEach((key) => {
+      const input = document.getElementById(key);
+      if (input) {
+        input.checked = value;
+      }
+    });
+  }
+
   async function restoreOptions() {
     const settings = Object.assign({}, core.DEFAULT_SETTINGS, await browserApi.storage.get(core.DEFAULT_SETTINGS));
     settingKeys().forEach((key) => {
@@ -34,6 +47,12 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     void restoreOptions();
+    document.getElementById("enableAllSites").addEventListener("click", () => {
+      setChecked(siteSettingKeys(), true);
+    });
+    document.getElementById("disableAllSites").addEventListener("click", () => {
+      setChecked(siteSettingKeys(), false);
+    });
     document.getElementById("save").addEventListener("click", () => {
       void saveOptions();
     });

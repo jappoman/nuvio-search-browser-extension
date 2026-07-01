@@ -62,6 +62,63 @@ describe("detail page extraction", () => {
     });
   });
 
+  it("extracts metadata from localized imdb pages", () => {
+    const dom = makeDom(`
+      <html>
+        <head><title>Interstellar (2014) - IMDb</title></head>
+        <body>
+          <h1>Interstellar</h1>
+        </body>
+      </html>
+    `, "https://www.imdb.com/it/title/tt0816692/");
+
+    expect(core.extractDetailMetadata(dom.window.document, dom.window.location)).toEqual({
+      imdbId: "tt0816692",
+      title: "Interstellar",
+      year: "2014",
+      type: "movie"
+    });
+  });
+
+  it("extracts metadata from localized justwatch film pages", () => {
+    const dom = makeDom(`
+      <html>
+        <head><title>Interstellar streaming: dove guardarlo online?</title></head>
+        <body>
+          <h1>Interstellar</h1>
+          <div>2014</div>
+          <a href="https://www.imdb.com/title/tt0816692/">IMDb</a>
+        </body>
+      </html>
+    `, "https://www.justwatch.com/it/film/interstellar");
+
+    expect(core.extractDetailMetadata(dom.window.document, dom.window.location)).toEqual({
+      imdbId: "tt0816692",
+      title: "Interstellar",
+      year: "2014",
+      type: "movie"
+    });
+  });
+
+  it("extracts metadata from app.trakt.tv pages", () => {
+    const dom = makeDom(`
+      <html>
+        <body>
+          <h1>Interstellar</h1>
+          <div>2014</div>
+          <a href="https://www.imdb.com/title/tt0816692/">IMDb</a>
+        </body>
+      </html>
+    `, "https://app.trakt.tv/movies/interstellar-2014?mode=media");
+
+    expect(core.extractDetailMetadata(dom.window.document, dom.window.location)).toEqual({
+      imdbId: "tt0816692",
+      title: "Interstellar",
+      year: "2014",
+      type: "movie"
+    });
+  });
+
   it("extracts wikipedia pages only when an imdb link exists", () => {
     const dom = makeDom(`
       <html>

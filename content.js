@@ -3,29 +3,84 @@
 
   const browserApi = global.NuvioBrowserApi;
   const core = global.NuvioCore;
-  const processedNodes = new WeakSet();
+  const siteModulesApi = global.NuvioSiteModules;
 
   function host() {
     return window.location.hostname.toLowerCase();
   }
 
-  function settingsKeyForHost(currentHost) {
-    if (currentHost === "www.google.com") return "showOnGoogle";
-    if (currentHost === "duckduckgo.com") return "showOnDuckDuckGo";
-    if (currentHost === "www.imdb.com") return "showOnImdb";
-    if (currentHost === "trakt.tv") return "showOnTrakt";
-    if (currentHost === "letterboxd.com") return "showOnLetterboxd";
-    if (currentHost === "www.justwatch.com") return "showOnJustWatch";
-    if (currentHost.endsWith(".wikipedia.org")) return "showOnWikipedia";
-    return null;
+  function normalizedText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
   }
 
-  function makeButton(meta, settings) {
+  function nodeText(node) {
+    return normalizedText(node && node.textContent);
+  }
+
+  function textMatches(node, pattern) {
+    return pattern.test(nodeText(node));
+  }
+
+  function firstVisible(nodes) {
+    return nodes.find(Boolean) || null;
+  }
+
+  function findNodeByText(selectors, pattern) {
+    const nodes = Array.from(document.querySelectorAll(selectors));
+    return nodes.find((node) => textMatches(node, pattern)) || null;
+  }
+
+  function findHeadingByText(pattern) {
+    return findNodeByText("h1, h2, h3, h4, strong, span, a, button, [role='heading']", pattern);
+  }
+
+  function findNodeByTextWithin(rootNode, selectors, pattern) {
+    if (!rootNode) {
+      return null;
+    }
+    const nodes = Array.from(rootNode.querySelectorAll(selectors));
+    return nodes.find((node) => textMatches(node, pattern)) || null;
+  }
+
+  function findNodeByTextExcluding(selectors, pattern, excludedPattern) {
+    const nodes = Array.from(document.querySelectorAll(selectors));
+    return nodes.find((node) => {
+      const content = nodeText(node);
+      return pattern.test(content) && !(excludedPattern && excludedPattern.test(content));
+    }) || null;
+  }
+
+  function findNodeByXPath(xpath) {
+    if (!xpath) {
+      return null;
+    }
+
+    const result = document.evaluate(
+      xpath,
+      document,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    );
+    return result.singleNodeValue || null;
+  }
+
+  function closestSectionLike(node) {
+    return node?.closest("section, article, aside, div, li") || node || null;
+  }
+
+  function findSectionByHeading(pattern) {
+    const heading = findHeadingByText(pattern);
+    return closestSectionLike(heading);
+  }
+
+  function makeButton(meta, settings, siteId) {
     const button = document.createElement("img");
     button.src = browserApi.runtime.getURL("icons/nuvio-32.png");
     button.alt = "Open in Nuvio";
     button.title = "Open in Nuvio";
     button.className = "nuvio-open-button";
+    button.dataset.siteId = siteId;
     button.style.width = "20px";
     button.style.height = "20px";
     button.style.marginLeft = "8px";
@@ -39,15 +94,23 @@
 
       const appUrl = core.buildNuvioAppUrl(meta);
       if (!appUrl) {
+        if (settings.fallbackToAssistant) {
+          openAssistantTab(meta);
+        }
         return;
       }
 
       scheduleAssistantFallback(meta, settings);
-
       window.location.href = appUrl;
     });
 
     return button;
+  }
+
+  function openAssistantTab(meta) {
+    const runtimeRoot = browserApi.runtime.getURL("/");
+    const assistantUrl = core.buildAssistantUrl(runtimeRoot, meta);
+    window.location.href = assistantUrl;
   }
 
   function scheduleAssistantFallback(meta, settings) {
@@ -55,120 +118,73 @@
       return;
     }
 
-    const runtimeRoot = browserApi.runtime.getURL("/");
-    const assistantUrl = core.buildAssistantUrl(runtimeRoot, meta);
-    let fallbackWindow = null;
-
-    try {
-      fallbackWindow = window.open("about:blank", "_blank");
-      if (fallbackWindow && fallbackWindow.document) {
-        fallbackWindow.document.title = "Opening Nuvio...";
-        fallbackWindow.document.body.innerHTML =
-          "<p style=\"font:16px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;color:#102033;\">" +
-          "Trying to open Nuvio. This tab will help if the app does not launch." +
-          "</p>";
-      }
-    } catch (_) {}
-
     setTimeout(() => {
       if (document.hidden) {
-        try {
-          fallbackWindow && fallbackWindow.close();
-        } catch (_) {}
         return;
       }
 
-      if (fallbackWindow && !fallbackWindow.closed) {
-        fallbackWindow.location.replace(assistantUrl);
-        return;
-      }
-
-      window.open(assistantUrl, "_blank", "noopener");
+      openAssistantTab(meta);
     }, 1200);
   }
 
-  function appendButton(targetNode, meta, settings) {
-    if (!targetNode || processedNodes.has(targetNode) || targetNode.querySelector(".nuvio-open-button")) {
+  function existingButtonForSite(siteId) {
+    return document.querySelector(`.nuvio-open-button[data-site-id="${siteId}"]`);
+  }
+
+  function appendButton(targetNode, meta, settings, siteId) {
+    if (!targetNode || !siteId) {
       return;
     }
-    processedNodes.add(targetNode);
-    targetNode.appendChild(makeButton(meta, settings));
-  }
 
-  function enhanceGoogle(settings) {
-    const links = Array.from(document.querySelectorAll("a[href*='imdb.com/title/tt']"));
-    links.forEach((link) => {
-      const imdbId = core.parseImdbIdFromUrl(link.href);
-      const titleNode = link.querySelector("h3") || link.closest("div")?.querySelector("h3");
-      if (!imdbId || !titleNode) {
-        return;
-      }
-      const surroundingText = link.closest("[data-hveid], .g, .MjjYud")?.textContent || link.textContent;
-      appendButton(titleNode, {
-        imdbId,
-        title: titleNode.textContent,
-        type: core.inferMediaTypeFromText(surroundingText)
-      }, settings);
-    });
-  }
-
-  function enhanceDuckDuckGo(settings) {
-    const links = Array.from(document.querySelectorAll("article a[href*='imdb.com/title/tt']"));
-    links.forEach((link) => {
-      const imdbId = core.parseImdbIdFromUrl(link.href);
-      const article = link.closest("article");
-      const titleNode = article?.querySelector("h2 a, h2");
-      if (!imdbId || !titleNode) {
-        return;
-      }
-      appendButton(titleNode, {
-        imdbId,
-        title: titleNode.textContent,
-        type: core.inferMediaTypeFromText(article.textContent)
-      }, settings);
-    });
-  }
-
-  function detailTargetNode(currentHost) {
-    if (currentHost === "www.imdb.com") return document.querySelector("h1");
-    if (currentHost === "trakt.tv") return document.querySelector("h1");
-    if (currentHost === "letterboxd.com") return document.querySelector("h1.headline-1, h1");
-    if (currentHost === "www.justwatch.com") return document.querySelector("h1");
-    if (currentHost.endsWith(".wikipedia.org")) return document.querySelector("#firstHeading");
-    return null;
-  }
-
-  function enhanceDetailPage(settings) {
-    const meta = core.extractDetailMetadata(document, window.location);
-    if (!meta || !meta.imdbId) {
+    const existingButton = existingButtonForSite(siteId);
+    if (existingButton && targetNode.contains(existingButton)) {
       return;
     }
-    appendButton(detailTargetNode(host()), meta, settings);
+
+    if (existingButton) {
+      existingButton.remove();
+      targetNode.appendChild(existingButton);
+      return;
+    }
+
+    targetNode.appendChild(makeButton(meta, settings, siteId));
+  }
+
+  function siteHelpers() {
+    return {
+      firstVisible,
+      findNodeByText,
+      findNodeByTextWithin,
+      findNodeByTextExcluding,
+      findNodeByXPath,
+      findHeadingByText,
+      findSectionByHeading,
+      nodeText
+    };
   }
 
   async function applyEnhancements() {
-    const currentHost = host();
-    const key = settingsKeyForHost(currentHost);
-    if (!key) {
+    const siteModule = siteModulesApi.getSiteModuleForHost(host());
+    if (!siteModule) {
       return;
     }
 
     const settings = Object.assign({}, core.DEFAULT_SETTINGS, await browserApi.storage.get(core.DEFAULT_SETTINGS));
-    if (!settings[key]) {
+    if (!settings[siteModule.settingKey]) {
       return;
     }
 
-    if (currentHost === "www.google.com") {
-      enhanceGoogle(settings);
-      return;
-    }
-
-    if (currentHost === "duckduckgo.com") {
-      enhanceDuckDuckGo(settings);
-      return;
-    }
-
-    enhanceDetailPage(settings);
+    siteModule.enhance({
+      appendButton(targetNode, meta, currentSettings) {
+        appendButton(targetNode, meta, currentSettings, siteModule.id);
+      },
+      browserApi,
+      core,
+      document,
+      helpers: siteHelpers(),
+      settings,
+      window
+    });
   }
 
   function debounce(callback, wait) {
@@ -185,14 +201,26 @@
 
   void applyEnhancements();
 
+  [500, 1500, 3000, 5000].forEach((delay) => {
+    setTimeout(() => {
+      void applyEnhancements();
+    }, delay);
+  });
+
   const observer = new MutationObserver((mutations) => {
-    const changed = mutations.some((mutation) => mutation.addedNodes && mutation.addedNodes.length > 0);
+    const changed = mutations.some((mutation) => (
+      (mutation.addedNodes && mutation.addedNodes.length > 0) ||
+      mutation.type === "attributes" ||
+      mutation.type === "characterData"
+    ));
     if (changed) {
       debouncedApply();
     }
   });
 
   observer.observe(document.documentElement, {
+    attributes: true,
+    characterData: true,
     childList: true,
     subtree: true
   });

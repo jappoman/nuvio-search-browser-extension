@@ -81,6 +81,18 @@
     return text(locationLike && locationLike.pathname);
   }
 
+  function isImdbHost(host) {
+    return host === "www.imdb.com";
+  }
+
+  function isTraktHost(host) {
+    return host === "trakt.tv" || host === "app.trakt.tv";
+  }
+
+  function isJustWatchHost(host) {
+    return host === "www.justwatch.com";
+  }
+
   function titleFromMeta(documentRef) {
     const ogTitle = documentRef.querySelector("meta[property='og:title']")?.getAttribute("content");
     if (ogTitle) {
@@ -130,7 +142,7 @@
     const host = hostnameFromLocation(locationLike);
     const path = pathnameFromLocation(locationLike);
 
-    if (host === "www.imdb.com" && path.startsWith("/title/")) {
+    if (isImdbHost(host) && /\/title\/tt\d{6,10}/i.test(path)) {
       return {
         imdbId: parseImdbIdFromText(path),
         title: text(documentRef.querySelector("h1")?.textContent) || titleFromMeta(documentRef),
@@ -139,7 +151,7 @@
       };
     }
 
-    if (host === "trakt.tv" && (/^\/movies\//.test(path) || /^\/shows\//.test(path))) {
+    if (isTraktHost(host) && (/^\/movies\//.test(path) || /^\/shows\//.test(path))) {
       return {
         imdbId: findImdbIdInDocument(documentRef),
         title: text(documentRef.querySelector("h1")?.textContent) || titleFromMeta(documentRef),
@@ -157,7 +169,7 @@
       };
     }
 
-    if (host === "www.justwatch.com" && /\/(movie|tv-show)\//.test(path)) {
+    if (isJustWatchHost(host) && /\/(movie|film|tv-show)\//.test(path)) {
       return {
         imdbId: findImdbIdInDocument(documentRef),
         title: text(documentRef.querySelector("h1")?.textContent) || titleFromMeta(documentRef),

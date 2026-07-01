@@ -2,7 +2,7 @@
 
 ## What this extension does
 
-The extension injects a Nuvio button next to movie / TV titles on supported sites. Clicking the button launches Nuvio with the official deep link format:
+The extension injects a Nuvio button on supported movie / TV pages. Clicking the button launches Nuvio with the official deep link format:
 
 `nuvio://meta?type=<movie|series>&id=<imdb-id>`
 
@@ -19,18 +19,24 @@ Because of that:
 
 ## Supported page strategies
 
+The runtime is split into:
+
+- `core.js`: shared metadata parsing and deep-link helpers
+- `site-modules.js`: one module per supported site, with host matching and placement logic
+- `content.js`: generic runtime that loads settings, resolves the active site module, and injects the button
+
 ### Search results
 
-- Google Search: inject next to IMDb result titles
+- Google Search: inject on IMDb result titles and, when available, inside the knowledge-panel watch section
 - DuckDuckGo: inject next to IMDb result titles
 
 ### Detail pages
 
-- IMDb: ID from URL
-- Trakt: ID from external IMDb link
-- Letterboxd: ID from the IMDb link in the page footer/details
-- JustWatch: ID extracted from server-rendered page HTML
-- Wikipedia: ID from external IMDb link
+- IMDb: ID from URL, including localized paths such as `/it/title/...`; button targeted to watch / streaming areas when found
+- Trakt: ID from external IMDb link; supports both `trakt.tv` and `app.trakt.tv`
+- Letterboxd: ID from the IMDb link in the page footer/details; button targeted to the `Where to Watch` area when found
+- JustWatch: ID extracted from server-rendered page HTML; supports localized `/film/` routes and targets the `Guarda ora` / watch section
+- Wikipedia: ID from external IMDb link; button prefers the infobox instead of only the article heading
 
 ## Browser support
 
@@ -60,6 +66,8 @@ Unit tests cover:
 - Nuvio deep link building
 - media type inference
 - metadata extraction from representative page snippets
+- placement logic for Google, IMDb, Letterboxd, JustWatch, Trakt, and Wikipedia
+- options-page bulk site toggles
 
 ## Current limitations
 
