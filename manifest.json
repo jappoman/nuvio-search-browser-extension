@@ -1,0 +1,64 @@
+{
+  "manifest_version": 3,
+  "name": "Open in Nuvio",
+  "version": "0.1.0",
+  "description": "Adds an Open in Nuvio button on popular movie and TV pages using Nuvio's official app deep links.",
+  "permissions": [
+    "storage",
+    "clipboardWrite"
+  ],
+  "action": {
+    "default_title": "Open in Nuvio"
+  },
+  "icons": {
+    "16": "icons/nuvio-16.png",
+    "32": "icons/nuvio-32.png",
+    "48": "icons/nuvio-48.png",
+    "128": "icons/nuvio-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://www.google.com/search*",
+        "*://duckduckgo.com/*",
+        "*://www.imdb.com/title/*",
+        "*://trakt.tv/movies/*",
+        "*://trakt.tv/shows/*",
+        "*://letterboxd.com/film/*",
+        "*://www.justwatch.com/*/movie/*",
+        "*://www.justwatch.com/*/tv-show/*",
+        "*://*.wikipedia.org/wiki/*"
+      ],
+      "js": [
+        "browser-api.js",
+        "core.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/nuvio-32.png",
+        "launch.html",
+        "launch.css",
+        "launch.js",
+        "browser-api.js",
+        "core.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "open-in-nuvio@example.com"
+    }
+  }
+}

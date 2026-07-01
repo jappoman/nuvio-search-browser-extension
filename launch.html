@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open in Nuvio</title>
+    <link rel="stylesheet" href="launch.css">
+  </head>
+  <body>
+    <main class="shell">
+      <img src="icons/nuvio-128.png" alt="Nuvio logo" class="logo">
+      <h1>Finish opening in Nuvio</h1>
+      <p id="summary" class="summary"></p>
+      <p class="note">The app deep link was attempted first. If the app did not open, you can try again or open the Nuvio website. Search details are copied when possible.</p>
+      <div class="actions">
+        <button id="openApp" type="button">Open Nuvio App</button>
+        <button id="openSite" type="button" class="secondary">Open nuvio.tv</button>
+      </div>
+      <pre id="queryBox" class="queryBox"></pre>
+    </main>
+
+    <script src="launch.js"></script>
+  </body>
+</html>

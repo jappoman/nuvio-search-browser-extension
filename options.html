@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open in Nuvio Settings</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <img src="icons/nuvio-128.png" alt="Nuvio logo" class="hero-logo">
+        <div>
+          <h1>Open in Nuvio</h1>
+          <p>Configure where the Nuvio button appears and how fallback behaves when the app deep link cannot be opened directly.</p>
+        </div>
+      </header>
+
+      <section class="panel">
+        <h2>Launch behavior</h2>
+        <label class="setting">
+          <input type="checkbox" id="fallbackToAssistant">
+          <span>Open an assistant tab if the browser stays on the page after trying the Nuvio app deep link</span>
+        </label>
+        <p class="hint">Nuvio currently exposes a stable app deep link, but not a stable public web detail URL for specific titles.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Supported sites</h2>
+        <label class="setting"><input type="checkbox" id="showOnGoogle"> <span>Google Search</span></label>
+        <label class="setting"><input type="checkbox" id="showOnDuckDuckGo"> <span>DuckDuckGo</span></label>
+        <label class="setting"><input type="checkbox" id="showOnImdb"> <span>IMDb</span></label>
+        <label class="setting"><input type="checkbox" id="showOnTrakt"> <span>Trakt</span></label>
+        <label class="setting"><input type="checkbox" id="showOnLetterboxd"> <span>Letterboxd</span></label>
+        <label class="setting"><input type="checkbox" id="showOnJustWatch"> <span>JustWatch</span></label>
+        <label class="setting"><input type="checkbox" id="showOnWikipedia"> <span>Wikipedia pages with IMDb links</span></label>
+      </section>
+
+      <div class="actions">
+        <button id="save" type="button">Save settings</button>
+        <span id="status" aria-live="polite"></span>
+      </div>
+    </main>
+
+    <script src="browser-api.js"></script>
+    <script src="core.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
